@@ -4,25 +4,21 @@
     <title>Organization Desginer Demo</title>
    
     <link rel="stylesheet" href="./css/organization.css">
+    <script src="./lib/jquery/dist/jquery.min.js"></script>
+    <script src="./lib/paper-full.js"></script>
+    <script src="./js/organization.graph.js"></script>
 </head>
 <body>
-
-
-<script src="./lib/jquery/dist/jquery.min.js"></script>
-<script src="./lib/paper-full.js"></script>
-<script src="./js/organization.graph.js"></script>
-
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Visual Web Organization Desginer Demo</p>
-    <div id="container">
+    <div class="text-center">
+        <h1 class="display-4">Welcome</h1>
+        <p>Visual Web Organization Desginer Demo</p>
+    </div>
+    <div id="container"></div>
+</body>
+</html>
 <script>
     $(function(){
         $("#container").organizationDesigner({readonly:false,height:"500px",width:"600px"});
 
     })
 </script>
-  
-
-
-</body></html>
