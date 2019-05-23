@@ -1,0 +1,234 @@
+.odui-toolbar .odui-box .odui-icon, 
+.odui-toolbar .odui-menubutton .odui-icon,
+.odui-toolbar .odui-splitbutton .odui-icon {
+    height: 20px !important;
+    width: 20px !important;
+    background-image: url(../images/icons.png);
+}
+.odui-checked{
+    background-color: #fff5d4;
+    border:1px solid #dcac6c;
+}
+.odui-toolbar {
+    position: relative;
+}
+.odui-toolbars{
+  text-align:left;
+  padding-top:6px;
+}
+.odui-graph
+{
+    border: 1px solid #d4d4d4;
+    background-color: #fafafa;
+    padding:0px;
+    background-image: -moz-linear-gradient(top, #ffffff, #f2f2f2);
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#ffffff), to(#f2f2f2));
+    background-image: -webkit-linear-gradient(top, #ffffff, #f2f2f2);
+    background-image: -o-linear-gradient(top, #ffffff, #f2f2f2);
+    background-image: linear-gradient(to bottom, #ffffff, #f2f2f2);
+    background-repeat: repeat-x;
+    /* border: 1px solid #d4d4d4; */
+    -webkit-border-radius: 4px 4px 0 0;
+    -moz-border-radius: 4px 4px 0 0;
+    border-radius: 4px 4px 0 0;
+}
+.odui-toolbar {
+    cursor: default;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    padding: 1px;
+    overflow: hidden;
+    zoom: 1;
+    display:inline-block;
+    width: auto;
+    height: auto;
+    text-align:left;
+}
+div.odui-box {
+    position: relative;
+    display: -moz-inline-box !important;
+    display: inline-block !important;
+    vertical-align: top;
+}
+.odui-box {
+    border: none;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+}
+.odui-icon:hover{
+    border: 1px solid #dcac6c;
+    background-color: #fff5d4;
+}
+.odui-toolbar .odui-separator {
+    width: 2px;
+    height: 20px;
+    margin: 2px 4px 2px 3px;
+    background: url(../images/icons.png) -181px 0;
+}
+.odui-designer{
+    position: relative;
+    height:calc(100% - 38px);
+    min-height: 160px;
+    border: 1px solid lightgray;
+}
+.odui-toolbox
+{
+    float: left;
+    width: 40px;
+    background-color: #eeeeee;
+    height: 100%;
+}
+.odui-designer-canvas
+{
+    overflow:  auto;
+    width: calc(100% - 40px);
+    height: 100%;
+}
+.odui-canvas
+{
+    background-color:white;
+}
+.odui-toolbox-button{
+    margin-top:5px;
+    margin-left:5px;
+    width: 28px !important;
+    height: 28px !important;
+     background-image: url(../images/icons.png) ;
+}
+.odui-toolbox-button:hover{
+    border: 1px solid #dcac6c;
+    background-color: #fff5d4;
+}
+/*
+.odui-toolbox-company {
+    background-position: -859px 0;
+}
+.odui-toolbox-dept {
+    background-position: -896px 0;
+}
+.odui-toolbox-position {
+    background-position: -967px 0;
+}
+.odui-toolbox-employee {
+    background-position: -931px 0;
+}
+*/
+.odui-toolbox-company {
+    background-position: -890px -36px;
+}
+.odui-toolbox-dept {
+    background-position: -919px -36px;
+}
+.odui-toolbox-position {
+    background-position: -975px -36px;
+}
+.odui-toolbox-employee {
+    background-position: -948px -36px;
+}
+/*源码*/
+.odui-for-source  {
+    background-position: -260px 0;
+}
+/*新建*/
+.odui-for-new  {
+    background-position: -520px 0;
+}
+/*打开*/
+.odui-for-open  {
+    background-position: -760px 0;
+}
+/*保存*/
+.odui-for-save{
+    background-position: -480px -20px;
+}
+/*清除*/
+.odui-for-clear{ 
+    background-position: -580px 0;
+}
+/*删除*/
+.odui-for-delete{
+    background-position: -360px -40px;
+}
+/*全选*/
+.odui-for-selectall{
+    background-position: -400px -20px;
+}
+/*移到前面*/
+.odui-for-bringfront{
+    background-position: -300px -20px;
+}
+/*移到后面*/
+.odui-for-bringback{
+    background-position: -280px -20px;
+}
+/*标尺*/
+.odui-for-ruler{
+    background-position: -124px -75px;
+}
+/*上对齐*/
+.odui-for-align-up{
+    background-position: -746px -40px;
+}
+/*下对齐*/
+.odui-for-align-down{
+    background-position: -766px -40px;
+}
+/*左对齐*/
+.odui-for-align-left{
+    background-position: -460px 0;
+}
+/*右对齐*/
+.odui-for-align-right{
+    background-position: -480px 0;
+}
+/*上下同距*/
+.odui-for-equal-ud{
+    background-position: -170px -75px;
+}
+/*左右同距*/
+.odui-for-equal-lr{
+    background-position: -213px -75px;
+}
+/*生成图片*/
+.odui-for-print{
+    background-position: -440px -20px;
+}
+/*公司*/
+.odui-for-company{
+    background-position: -775px -75px;
+}
+/*部门*/
+.odui-for-dept{
+    background-position: -752px -75px;
+}
+/*岗位*/
+.odui-for-position{
+    background-position: -800px -75px;
+}
+/*员工*/
+.odui-for-employee{
+    background-position: -825px -75px;
+}
+/*生成图片*/
+.odui-for-image{
+    background-position: -40px -40px;
+}
+/*箭头*/
+.odui-for-pointer  {
+    background-position: -870px -40px;
+}
+/*曲线*/
+.odui-for-curve{
+    background-position: -826px -42px;
+}
+/*折线*/
+.odui-for-zline{
+    background-position: -848px -42px;
+}
+.odui-component{
+    cursor:move;
+}
+
+
+
