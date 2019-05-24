@@ -1166,6 +1166,12 @@
                         evt.dataTransfer.setData("text", $(evt.target)[0].title);
                 });
             });
+            $(".odui-icon").each(function(){
+                $(this).on("click",function(){
+                    var name=$(this).attr("title");
+                    debugger;
+                })
+            })
         }
         else
         {
