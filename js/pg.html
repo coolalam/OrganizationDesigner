@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>dataGrid - jQuery EasyUI Demo</title>
+  <link rel="stylesheet" type="text/css" href="../../themes/default/easyui.css">
+  <link rel="stylesheet" type="text/css" href="../../themes/icon.css">
+  <link rel="stylesheet" type="text/css" href="../demo.css">
+  <script type="text/javascript" src="../../jquery.min.js"></script>
+  <script type="text/javascript" src="../../jquery.easyui.min.js"></script>
+  <script type="text/javascript">
+  $(function(){
+    var data = [
+      {"name":"Name","value":"Bill Smith","group":"ID Settings","editor":"text"},
+      {"name":"Address","value":"","group":"ID Settings","editor":"text"},
+      {"name":"SSN","value":"123-456-7890","group":"ID Settings","editor":"text"},
+      {"name":"Email","value":"bill@gmail.com","group":"Marketing Settings","editor":{
+          "type":"validatebox",
+          "options":{
+              "validType":"email"
+          }
+      }}
+    ];
+    $('#pg').propertygrid({
+        data: data,
+        showGroup: true,
+        scrollbarSize: 0,
+    });
+    $('#pg').propertygrid('collapseGroup');
+    var row = {
+      name:'AddName',
+      value:'',
+      group:'Marketing Settings',
+      editor:'text'
+    };
+    $('#pg').propertygrid('appendRow',row);
+  })
+  </script>
+<body>
+  <table id="pg" style="width:300px"></table>
+</body>
+</head>
+</html>

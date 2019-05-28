@@ -16,6 +16,19 @@
   text-align:left;
   padding-top:6px;
 }
+.odui-propertygrid-close{
+    float: right;
+    width: 18px;
+    height: 18px;
+    margin-top:3px;
+    background: url(../images/ding.png) no-repeat;
+}
+.odui-propertygrid-close:hover{
+    cursor:pointer;
+    opacity: 0.5;
+    border:1px solid #fff5d4;
+
+}
 .odui-graph
 {
     border: 1px solid #d4d4d4;
@@ -56,6 +69,26 @@ div.odui-box {
     margin: 0;
     overflow: hidden;
 }
+.odui-propertygrid{
+    width: 250px;
+    top: 0px;
+    height:100%;
+    bottom: 0px;
+    right: 0px;
+    padding:0px;
+    position: absolute;
+    border-left:1px solid lightgray;
+    display:none;
+}
+.odui-propertygrid-header{
+    padding:5px;
+    background-color:#eee;
+    height:32px;
+}
+.odui-propertygrid-table{
+    overflow-y:auto;
+    height:calc(100% - 40px);
+}
 .odui-icon:hover{
     border: 1px solid #dcac6c;
     background-color: #fff5d4;
@@ -68,9 +101,17 @@ div.odui-box {
 }
 .odui-designer{
     position: relative;
-    height:calc(100% - 38px);
+    height:calc(100% - 34px);
     min-height: 160px;
     border: 1px solid lightgray;
+}
+.odui-designer-canvas-pg{
+    overflow: auto;
+    position: absolute;
+    left: 40px;
+    right: 250px;
+    bottom: 0px;
+    top: 0px;
 }
 .odui-toolbox
 {
@@ -229,6 +270,32 @@ div.odui-box {
 .odui-component{
     cursor:move;
 }
-
-
+.pgTable {
+    border: solid 1px #95B8E7;
+    border-spacing: 0;
+    width:100%;
+  }
+  
+  .pgGroupRow {
+    background-color: #E0ECFF;
+    font-weight: bold;
+  }
+  
+  .pgGroupCell {
+    padding: 5px;
+  }
+  
+  .pgCell {
+    border: dotted 1px #ccc;
+    padding: 5px;
+  }
+  .pgCell-label {
+    border: dotted 1px #ccc;
+    padding: 5px;
+    padding-left:30px;
+    font-size:smaller;
+  }
+  .pgControl{
+      width:100%;
+  }
 

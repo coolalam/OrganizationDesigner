@@ -1,6 +1,7 @@
 +function ($) {
     "use strict";
     function Component() {
+        this.selected=false;
     }
 
     Component.prototype.resize = function (direction,delta) {
@@ -30,7 +31,7 @@
         //
 
         var me=this;
-        debugger;
+        
         $.each(this.designer.lines,function(idx,item){ //遍历每一条线，与此结点相关的都要重绘
             if (item.properties.source==me.properties.id)
             {
@@ -54,7 +55,7 @@
 
         return this;
     };
-    Component.prototype.init = function (options) {
+    Component.prototype.init = function (designer,options) {
         if (options == undefined)
             options = {};
             var newProp={} ;
@@ -64,11 +65,12 @@
            this.properties=newProp;
      
         this.group = new paper.Group();
-        this.designer = undefined; //当前设计器，createElement时赋值
+        this.designer = designer; //当前设计器，
         //this.removeIndicator=undefined;
         var me = this;
         this.drag = false;
         this.isLine=false;
+        this.label=null;//当前节点标签，render时创建实例
         this.resizers=null;
         this.connector = null; //活动的连线指示符
         this.group.onClick = function (event) {
@@ -105,7 +107,7 @@
         };
         this.group.onMouseEnter=function(event)
         {
-            if (!me.connector && me.designer.lining){
+            if (!me.isLine && !me.connector && me.designer.lining){
                 me.unselect()
                 me.connector=new Connector(me);
                 me.connector.render();
@@ -121,7 +123,7 @@
         };
         this.group.onMouseMove=function(event)
         {
-            if (me.designer.lining && me.connector){
+            if (!me.isLine && me.designer.lining && me.connector){
                 var activeConnector=me.connector.hiTest(event);
                 if (activeConnector)
                     activeConnector.visible=true;
@@ -130,6 +132,41 @@
 
         return this;
     };
+    Component.prototype.createLabel=function()
+    {
+        this.label=new paper.PointText({
+            point:[30,15],
+            content:this.properties.title,
+            fillColor:this.properties.fontColor,
+            fontSize:this.properties.fontSize
+        });
+        this.group.addChild(this.label);
+    }
+    ///标签编辑事件注册
+    Component.prototype.onPropertySetting=function()
+    {
+        var me=this;
+        if (!this.designer.options.readonly)
+        {
+            var settingsIcon=document.createElement("img");
+            settingsIcon.src="./images/settings.png";
+            var raster=new paper.Raster(settingsIcon);
+            raster.position=[this.properties.width-14,this.properties.height-12];
+            raster.opacity=0.5;
+            raster.onMouseEnter=function(){
+                this.set({opacity:1});
+                document.body.style.cursor="pointer";
+            }
+            raster.onMouseLeave=function(){
+                this.set({opacity:0.5});
+                document.body.style.cursor="default";
+            }
+            this.group.addChild(raster);
+            raster.onClick=function(){
+                me.designer.propertyGrid(me);
+            }
+        }
+    }
     Component.prototype.getConnectorCenterByPos = function (pos)
     {
         var bounds = this.getBound();
@@ -173,7 +210,6 @@
     };
     Component.prototype.getConnectorDirection =function (pos)
     {
-        return "up"; //组织架构只允许上下连线
         var bounds = this.getBound();
         if (pos.x >= bounds.x - 5 && pos.x <= bounds.x + 5 && pos.y >= bounds.y + bounds.height / 2 - 5 && pos.y <= bounds.y + bounds.height / 2 + 5) {
             //在左连线指示器框中
@@ -207,13 +243,11 @@
     Component.prototype.select = function () {
         if (!this.designer.lining){
             this.group.children[0].selected = true;
-            //if (!this.isLine)
-                this.resizers=this.createResizers();
-            //if (this.removeIndicator)
-            //    this.removeIndicator.show();
-            //else
-            //    this.removeIndicator=new RemoveIndicator(this).show();
         }
+        if (!this.isLine && !this.resizers)
+           this.resizers=this.createResizers();
+
+        this.selected=true;
     };
     //默认创建四个方位的大小调整器
     Component.prototype.createResizers=function(){
@@ -235,6 +269,7 @@
             this.resizers=null;
             document.body.style.cursor="default";
         }
+        this.selected=false;
         //if (this.removeIndicator){
         //    this.removeIndicator.hide();
         //    this.removeIndicator=null;
@@ -272,12 +307,18 @@
         backgroundColor:"white",
         backgroundImage:'',
         fontColor:'black',
+        fontSize:12,
         borderColor:'black',
+        borderRadius:5,
         lineWeight:1,
         title: '',
+        abbr:'',
+        responsible:'',
         status: 1,
         runMode: 1,
-        capacity:1
+        capacity:1,
+        pid:'',
+        pname:''
     });
 
     function CompanyNode() { 
@@ -286,6 +327,7 @@
         this.properties.width = 150;
         this.properties.height = 50;
         this.properties.opacity = 0.5;
+        this.properties.title="公司名称"
     }
     CompanyNode.prototype = $.extend({}, Component.prototype);
     CompanyNode.prototype = $.extend(CompanyNode.prototype, {
@@ -295,13 +337,22 @@
             var rect = new paper.Path.Rectangle({
                 point: [0,0],
                 size: [this.properties.width, this.properties.height],
-                radius: 5,
+                radius: this.properties.borderRadius,
                 strokeWidth: 1,
                 strokeColor: this.properties.borderColor,
                 fillColor: this.properties.backgroundColor,
                 opacity: this.properties.opacity
             });
+            var companyIcon=document.createElement("img");
+            companyIcon.src="./images/company.png";
+            var raster=new paper.Raster(companyIcon);
+            raster.position=[15,15];
+            raster.opacity=0.5;
             this.group.addChild(rect);
+
+            this.group.addChild(raster);
+            this.createLabel();
+            this.onPropertySetting();
             this.group.translate(this.properties.x, this.properties.y);
             return this;
         }
@@ -312,6 +363,7 @@
         this.properties.width = 150;
         this.properties.height = 50;
         this.properties.opacity = 0.5;
+        this.properties.title="部门名称"
     }
     DepartmentNode.prototype = $.extend({}, Component.prototype);
     DepartmentNode.prototype = $.extend(DepartmentNode.prototype, {
@@ -321,13 +373,23 @@
             var rect = new paper.Path.Rectangle({
                 point: [0,0],
                 size: [this.properties.width, this.properties.height],
-                radius: 5,
+                radius: this.properties.borderRadius,
                 strokeWidth: 1,
                 strokeColor: this.properties.borderColor,
                 fillColor: this.properties.backgroundColor,
                 opacity: this.properties.opacity
             });
             this.group.addChild(rect);
+            var deptIcon=document.createElement("img");
+            deptIcon.src="./images/department.png";
+            var raster=new paper.Raster(deptIcon);
+            raster.position=[15,15];
+            raster.opacity=0.5;
+            this.group.addChild(rect);
+
+            this.group.addChild(raster);
+            this.createLabel();
+            this.onPropertySetting();
             this.group.translate(this.properties.x, this.properties.y);
             return this;
         }
@@ -335,9 +397,10 @@
     function PositionNode() { 
         this.properties={};
         this.properties.typeName = "岗位";
-        this.properties.width = 150;
-        this.properties.height = 50;
+        this.properties.width = 100;
+        this.properties.height = 40;
         this.properties.opacity = 0.5;
+        this.properties.title="岗位名称"
     }
     PositionNode.prototype = $.extend({}, Component.prototype);
     PositionNode.prototype = $.extend(PositionNode.prototype, {
@@ -347,13 +410,23 @@
             var rect = new paper.Path.Rectangle({
                 point: [0,0],
                 size: [this.properties.width, this.properties.height],
-                radius: 5,
+                radius: this.properties.borderRadius,
                 strokeWidth: 1,
                 strokeColor: this.properties.borderColor,
                 fillColor: this.properties.backgroundColor,
                 opacity: this.properties.opacity
             });
             this.group.addChild(rect);
+            var posIcon=document.createElement("img");
+            posIcon.src="./images/position.png";
+            var raster=new paper.Raster(posIcon);
+            raster.position=[15,15];
+            raster.opacity=0.5;
+            this.group.addChild(rect);
+
+            this.group.addChild(raster);
+            this.createLabel();
+            this.onPropertySetting();
             this.group.translate(this.properties.x, this.properties.y);
             return this;
         }
@@ -361,9 +434,10 @@
     function EmployeeNode() { 
         this.properties={};
         this.properties.typeName = "员工";
-        this.properties.width = 150;
-        this.properties.height = 50;
+        this.properties.width = 100;
+        this.properties.height = 40;
         this.properties.opacity = 0.5;
+        this.properties.title="员工姓名"
     }
     EmployeeNode.prototype = $.extend({}, Component.prototype);
     EmployeeNode.prototype = $.extend(EmployeeNode.prototype, {
@@ -373,13 +447,23 @@
             var rect = new paper.Path.Rectangle({
                 point: [0,0],
                 size: [this.properties.width, this.properties.height],
-                radius: 5,
+                radius: this.properties.borderRadius,
                 strokeWidth: 1,
                 strokeColor: this.properties.borderColor,
                 fillColor: this.properties.backgroundColor,
                 opacity: this.properties.opacity
             });
             this.group.addChild(rect);
+            var empIcon=document.createElement("img");
+            empIcon.src="./images/employee.png";
+            var raster=new paper.Raster(empIcon);
+            raster.position=[15,15];
+            raster.opacity=0.5;
+            this.group.addChild(rect);
+
+            this.group.addChild(raster);
+            this.createLabel();
+            this.onPropertySetting();
             this.group.translate(this.properties.x, this.properties.y);
             return this;
         }
@@ -406,7 +490,7 @@
         this.properties={};
         this.properties.typeName = "曲线";
         this.properties.strokeWidth = 2;
-        this.properties.strokeColor = 'red';      
+        this.properties.strokeColor = '#8a8a8a';      
     }
     BezierLine.prototype = $.extend({}, Component.prototype);
     BezierLine.prototype = $.extend(BezierLine.prototype, {
@@ -448,7 +532,7 @@
         this.properties={};
         this.properties.typeName = "折线";
         this.properties.strokeWidth = 2;
-        this.properties.strokeColor = 'red';      
+        this.properties.strokeColor = '#8a8a8a';      
     }
     PolyLine.prototype = $.extend({}, Component.prototype);
     PolyLine.prototype = $.extend(PolyLine.prototype, {
@@ -891,7 +975,6 @@
             var xy = co.node.getConnectorCenterByPos(pos); //获取当前鼠标位置处连接点的中央坐标
             if (this.line !== null  ) {
                 if (this.start.node.properties.id!=co.node.properties.id){
-                    debugger;
   
                     this.designer.createLine(this.designer.lineType,{sourceType:this.start.node.getConnectorDirection(this.startPos),targetType:co.node.getConnectorDirection(pos),source:this.start.node.properties.id,target:co.node.properties.id,sxy:this.startPos,txy:xy});
                 }
@@ -984,23 +1067,23 @@
         var element = null;
         switch (typeName) {
             case "公司":
-                element = new CompanyNode().init().render(options);
+                element = new CompanyNode().init(this).render(options);
                 break;
             case "部门":
-                element= new DepartmentNode().init().render(options);
+                element= new DepartmentNode().init(this).render(options);
                 break;
             case "岗位":
-                element = new PositionNode().init().render(options);
+                element = new PositionNode().init(this).render(options);
                 break;
             case "员工":
-                element = new EmployeeNode().init().render(options);
+                element = new EmployeeNode().init(this).render(options);
                 break; 
             case "图片":
-                element = new CustomImage().init().render(options);
+                element = new CustomImage().init(this).render(options);
                 break; 
         }
         this.nodes[element.properties.id] = element;
-        element.designer = this;
+        
 
     }    /*增加元素*/
     OrganizationDesigner.prototype.createLine= function (typeName, options) {
@@ -1034,7 +1117,6 @@
 
     OrganizationDesigner.prototype.init = function (element, options) {
         this.enabled = true;
-        debugger;
 
         this.$element = $(element);
         this.id= element instanceof jQuery ? element[0].id : element.id;
@@ -1052,7 +1134,6 @@
         var me = this;
         this.htmlCanvas.on("drop", function (event) {
             event.preventDefault();
-            debugger;
             var data = null;
             if (event.dataTransfer == undefined && event.originalEvent != undefined)
                 data = event.originalEvent.dataTransfer.getData("text");
@@ -1143,7 +1224,10 @@
         {
             var toolbarTpl="<div class=\" odui-graph\" style=\"width:"+me.options.width+";height:"+me.options.height+"\"><div class=\"odui-toolbars\"><div class=\" odui-toolbar\"><div class=\" odui-box\"><div title=\"源代码\"class=\" odui-for-source odui-icon\"></div></div><div class=\" odui-box\"><div class=\" odui-separator\"></div></div><div class=\" odui-box\"><div title=\"新建\"class=\" odui-icon odui-for-new\"></div></div><div class=\" odui-box\"><div title=\"打开\"class=\" odui-icon odui-for-open\"></div></div><div class=\" odui-box\"><div title=\"保存\"class=\" odui-icon odui-for-save\"></div></div><div class=\" odui-box\"><div title=\"输出图片\"class=\" odui-icon odui-for-print\"></div></div><div class=\" odui-box\"><div class=\" odui-separator\"></div></div></div><div class=\" odui-toolbar\"><div class=\" odui-box\"><div title=\"清除\"class=\" odui-for-clear odui-icon\"></div></div><div class=\" odui-box\"><div title=\"删除\"class=\" odui-icon odui-for-delete\"></div></div><div class=\" odui-box\"><div title=\"全选\"class=\" odui-icon odui-for-selectall\"></div></div><div class=\" odui-box\"><div title=\"移到前面\"class=\" odui-icon odui-for-bringfront\"></div></div><div class=\" odui-box\"><div title=\"移到后面\"class=\" odui-icon odui-for-bringback\"></div></div><div class=\" odui-box\"><div class=\" odui-separator\"></div></div></div><div class=\" odui-toolbar\"><div class=\" odui-box\"><div title=\"标尺\"class=\" odui-for-ruler odui-icon\"></div></div><div class=\" odui-box\"><div title=\"左对齐\"class=\" odui-for-align-left odui-icon\"></div></div><div class=\" odui-box\"><div title=\"右对齐\"class=\" odui-icon odui-for-align-right\"></div></div><div class=\" odui-box\"><div title=\"上对齐\"class=\" odui-icon odui-for-align-up\"></div></div><div class=\" odui-box\"><div title=\"下对齐\"class=\" odui-icon odui-for-align-down\"></div></div><div class=\" odui-box\"><div title=\"垂直同距\"class=\" odui-icon odui-for-equal-ud\"></div></div><div class=\" odui-box\"><div title=\"水平同距\"class=\" odui-icon odui-for-equal-lr\"></div></div><div class=\" odui-box\"><div class=\" odui-separator\"></div></div></div>"+
             "<div class=\" odui-toolbar\"><div class=\" odui-box\"><div name=\""+this.id+"linkType\" title=\"移动\"class=\" odui-for-pointer odui-icon odui-checked\"></div></div><div class=\" odui-box\"><div name=\""+this.id+"linkType\"title=\"曲线\"class=\" odui-for-curve odui-icon\"></div></div><div class=\" odui-box\"><div name=\""+this.id+"linkType\"title=\"折线\"class=\" odui-for-zline odui-icon\"></div></div><div class=\" odui-box\"><div class=\" odui-separator\"></div></div></div></div>"+
-            "<div class=\"odui-designer\"><div class=\"odui-toolbox\"><div title=\"公司\"class=\" odui-toolbox-button odui-toolbox-company odui-component\"draggable=\"true\"></div><div title=\"部门\"class=\" odui-toolbox-button odui-toolbox-dept odui-component\"draggable=\"true\"></div><div title=\"岗位\"class=\" odui-toolbox-button odui-toolbox-position odui-component\"draggable=\"true\"></div><div title=\"员工\"class=\" odui-toolbox-button odui-toolbox-employee odui-component\"draggable=\"true\"></div></div><div class=\"odui-designer-canvas\"></div></div>";
+            "<div class=\"odui-designer\"><div class=\"odui-toolbox\"><div title=\"公司\"class=\" odui-toolbox-button odui-toolbox-company odui-component\"draggable=\"true\"></div><div title=\"部门\"class=\" odui-toolbox-button odui-toolbox-dept odui-component\"draggable=\"true\"></div><div title=\"岗位\"class=\" odui-toolbox-button odui-toolbox-position odui-component\"draggable=\"true\"></div><div title=\"员工\"class=\" odui-toolbox-button odui-toolbox-employee odui-component\"draggable=\"true\"></div></div>"+
+            "<div class=\"odui-designer-canvas\"></div>"+
+            "<div class=\"odui-propertygrid\"><div class=\"odui-propertygrid-header\">属性页<div title=\"隐藏\" class=\"odui-propertygrid-close\"></div></div>"+
+            "<div class=\"odui-propertygrid-table\" id=\""+this.id+"-pg\"></div></div></div>";
             
             this.$element.append(toolbarTpl);
             $.each(this.$element.find("div[name='"+this.id+"linkType']"),function(idx,val){
@@ -1151,9 +1235,13 @@
                     me.setLineStatus($(this).attr("title"));
                     $(this).parent().parent().find("div[name='"+me.id+"linkType']").removeClass("odui-checked");
                     $(this).addClass("odui-checked");
-                    debugger;
                 })
             })
+            
+           $(".odui-propertygrid-close").on("click",function(){
+            debugger;   
+            me.hidePropertyGrid();
+           })
             this.$element.find("div[class='odui-designer-canvas']").append("<canvas height=\""+me.options.height+"\""+" width=\""+me.options.width+"\""+" id=\""+this.id+"Canvas\" class=\"odui-canvas\"></canvas>");
             $('.odui-component').each(function () {
                 $(this).on("dragstart", function (event) {
@@ -1169,7 +1257,22 @@
             $(".odui-icon").each(function(){
                 $(this).on("click",function(){
                     var name=$(this).attr("title");
-                    debugger;
+                    switch(name)
+                    {
+                        case "删除":
+                            $.each(me.getSelects(),function(idx,val){
+                                me.removeComponent(val);
+                            })
+                            break;
+                        case "全选":
+                            $.each(me.nodes,function(idx,val){
+                                val.select();
+                            })
+                            break;
+                        case "清除":
+                            me.clear();
+                            break;
+                    }
                 })
             })
         }
@@ -1192,12 +1295,10 @@
     OrganizationDesigner.prototype.clear = function () {
         var me = this;
         $.each(this.nodes, function (idx, item) {
-            item.destroy();
-            delete me.nodes[item.properties.id]
+            me.removeComponent(item);
         })
         $.each(this.lines, function (idx, item) {
-            item.destroy();
-            delete me.lines[item.properties.id]
+            me.removeComponent(item);
         })
     }
     OrganizationDesigner.prototype.selectAll = function (status) {
@@ -1231,6 +1332,18 @@
             }
         })
     }
+    OrganizationDesigner.prototype.getSelects = function (component) {
+        var selectNodes=[];
+        $.each(this.nodes,function(idx,val){
+            if (val.selected)
+                selectNodes.push(val);
+        });
+        $.each(this.lines,function(idx,val){
+            if (val.selected)
+                selectNodes.push(val);
+        });
+        return selectNodes;
+    }
     OrganizationDesigner.prototype.open = function (content) {
         //此处打开操作：清除原来内容，并渲染新内容的代码
         this.clear();//先清除原来内容
@@ -1242,7 +1355,7 @@
         }
         for (var l1 in contentObj.lines)
         {
-            debugger;
+            
             var line = contentObj.lines[l1];
             this.createLine(line.properties.typeName, line.properties)
         }
@@ -1251,7 +1364,7 @@
         return this.getTitle() || this.getContent()
     }
     OrganizationDesigner.prototype.getContent = function () {
-        debugger;
+        
         return JSON.stringify({ "nodes": this.nodes, "lines": this.lines },
             function (k, v) {
                 if (k == "designer"||k=="resizer"||k=="removeIndicator") {
@@ -1260,11 +1373,88 @@
                 return v;
             });
     }
+    OrganizationDesigner.prototype.hidePropertyGrid=function()
+    {
+        this.$element.find("div[class='odui-designer-canvas-pg']").removeClass("odui-designer-canvas-pg").addClass("odui-designer-canvas");
+        this.$element.find("div[class='odui-propertygrid']").hide();
+    }
+    //显示指定对象属性到propertyGrid中
+    OrganizationDesigner.prototype.propertyGrid=function(component)
+    {
+        $(".odui-propertygrid").show();
+        this.$element.find("div[class='odui-designer-canvas']").removeClass("odui-designer-canvas").addClass("odui-designer-canvas-pg");
+        this.$element.find("div[class='odui-propertygrid']").show();
+        var theMeta = {
+            x: { group: '位置', name: 'X',type:"label"},
+            y: { group: '位置', name: 'Y',type:"label"},
+            width: { group: '位置', name: 'Width'},
+            height: { group: '位置', name: 'Height'},
+            borderRadius: { group: '外观', name: '边框圆角', type: 'number', options: { min: 0, max: 20, step: 2 }},
+            fontColor: { group: '外观', name: '字体颜色', type: 'color', options: { preferredFormat: 'hex' }},
+            backgroundColor: { group: '外观', name: '背景颜色', type: 'color', options: { preferredFormat: 'hex' }},
+            borderColor: { group: '外观', name: '边框颜色', type: 'color', options: { preferredFormat: 'hex' }},
+            label: { group: '数据',name:'名称'},
+            abbr: { group: '数据',name:'名称缩写'},
+            responsible: { group: '数据',name:'Report to'},
+            };
+            debugger;
+            var propertyChangedCallback=function(val){
+                debugger;
+            };
+            var theCustomTypes = {
+				icon: {
+					html: function(elemId, name, value, meta) { // custom renderer for type (required)
+						return '<i class="fa fa-' + value + '"></i>';
+					},
+					valueFn: function() {return 'Icon field value';}
+				},
+				textarea: {
+					html: function(elemId, name, value, meta) {
+						var html = '<textarea id="' + elemId + '" rows=6 style="white-space: nowrap; overflow-x: auto; width:100%">';
+						if (value instanceof Array) {
+							html += value.join("\n");
+						}
+						html += '</textarea>';
+						return html;
+					},
+					makeValueFn: function(elemId, name, value, meta) {
+						return function() {
+							return $('#' + elemId).val().split('\n');
+						}
+					}
+				}
+			};
+            var theObj={
+                x: component.properties.x,
+                y: component.properties.y,
+                width: component.properties.width,
+                height: component.properties.height,
+                borderRadius: component.properties.borderRadius,
+                fontColor: component.properties.fontColor,
+                backgroundColor: component.properties.backgroundColor,
+                borderColor: component.properties.borderColor,
+                label:component.properties.title,
+                abbr: component.properties.abbr,
+                responsible: component.properties.responsible,
+            };
+            $("#"+this.id+"-pg").children().remove();
+            $("#"+this.id+"-pg").jqPropertyGrid(theObj, {
+				meta: theMeta, 
+				customTypes: theCustomTypes,
+				helpHtml: '<i class="fa fa-question-circle-o"></i>',
+				callback: propertyChangedCallback,
+				isCollapsible: true,
+				sort: function(a,b){
+					return a > b ? 1 : a < b ? -1 : 0; 
+				},
+			});
+
+    }
     var old = $.fn.organizationDesigner
     // OrganizationDesigner 插件定义,扩展jquery函数
     // =========================
     $.fn.organizationDesigner = function (option) {
-        debugger;
+        
         return new OrganizationDesigner(this, option);
     }
     $.fn.organizationDesigner.Constructor = OrganizationDesigner
@@ -1275,4 +1465,328 @@
         return this
     }
 
+    var OTHER_GROUP_NAME = 'Other';
+	var GET_VALS_FUNC_KEY = 'pg.getValues';
+	var pgIdSequence = 0;
+
+    // jqPropertyGrid 属性页插件
+    //============================
+	$.fn.jqPropertyGrid = function(obj,options){
+		if (typeof obj === 'string' && obj === 'get') {
+			if (typeof this.data(GET_VALS_FUNC_KEY) === 'function') {
+				return this.data(GET_VALS_FUNC_KEY)();
+			}
+
+			return null;
+		} else if (typeof obj === 'string') {
+			console.error('jqPropertyGrid got invalid option:', obj);
+			return;
+		} else if (typeof obj !== 'object' || obj === null) {
+			console.error('jqPropertyGrid must get an object in order to initialize the grid.');
+			return;
+		}
+
+		options = options && typeof options === 'object' ? options : {};
+		options.meta = options.meta && typeof options.meta === 'object' ? options.meta : {};
+		options.customTypes = options.customTypes || {};
+		options.helpHtml = options.helpHtml || '[?]';
+		options.sort = (typeof options.sort === 'undefined') ? false : options.sort;
+		options.isCollapsible = (typeof options.isCollapsible === 'undefined') ? false : !!(options.isCollapsible);
+		options.callback = (typeof options.callback === 'function') ? options.callback : null;
+		var meta = options.meta;
+		var propertyRowsHTML = {OTHER_GROUP_NAME: ''};
+		var groupsHeaderRowHTML = {};
+		var postCreateInitFuncs = [];
+		var getValueFuncs = {};
+		var pgId = 'pg' + (pgIdSequence++);
+		var el = this;
+
+		var currGroup;
+		var properties = Object.keys(obj);
+
+		if (options.sort) {
+			if (typeof options.sort === 'boolean') {
+				properties = properties.sort();
+			} else if (typeof options.sort === 'function') {
+				properties = properties.sort(options.sort);
+			}
+		}
+
+		properties.forEach(function handleProperty(prop) {
+			if (typeof obj[prop] === 'function' || (meta[prop] && meta[prop].browsable === false)) {
+				return;
+			}
+			currGroup = (meta[prop] && meta[prop].group) || OTHER_GROUP_NAME;
+			if (currGroup !== OTHER_GROUP_NAME && !groupsHeaderRowHTML[currGroup]) {
+				groupsHeaderRowHTML[currGroup] = getGroupHeaderRowHtml(currGroup, options.isCollapsible);
+			}
+			propertyRowsHTML[currGroup] = propertyRowsHTML[currGroup] || '';
+			propertyRowsHTML[currGroup] += getPropertyRowHtml(pgId, prop, obj[prop], meta[prop], postCreateInitFuncs, getValueFuncs, options, el);
+		});
+		var innerHTML = '<table class="pgTable">';
+		for (var group in groupsHeaderRowHTML) {
+			innerHTML += groupsHeaderRowHTML[group];
+			innerHTML += propertyRowsHTML[group];
+		}
+
+		if (propertyRowsHTML[OTHER_GROUP_NAME]) {
+			innerHTML += getGroupHeaderRowHtml(OTHER_GROUP_NAME, options.isCollapsible);
+			innerHTML += propertyRowsHTML[OTHER_GROUP_NAME];
+		}
+		innerHTML += '</table>';
+		this.html(innerHTML);
+		for (var i = 0; i < postCreateInitFuncs.length; ++i) {
+			if (typeof postCreateInitFuncs[i] === 'function') {
+				postCreateInitFuncs[i]();
+				postCreateInitFuncs[i] = null;
+			}
+		}
+		var getValues = function() {
+			var result = {};
+			for (var prop in getValueFuncs) {
+				if (typeof getValueFuncs[prop] !== 'function') {
+					continue;
+				}
+
+				result[prop] = getValueFuncs[prop]();
+			}
+
+			return result;
+		};
+
+		this.data(GET_VALS_FUNC_KEY, getValues);
+
+		if (options.isCollapsible) {
+			$(el).find('.pgGroupRow').click(function onGroupRowClick() {
+				var insideHtml = $(this).html();
+				var insideText = $(insideHtml).text();
+				var isPlus = insideText[0] === '+';
+				var subText = insideText.substring(1);
+				var currentText = isPlus ? '-' + subText : '+' + subText;
+				var currentHtml = insideHtml.replace(insideText, currentText);
+				$(this).html(currentHtml);
+				$(this).nextUntil('tr.pgGroupRow').slideToggle(1);
+			});
+		} else {
+			$('tr.pgGroupRow').each(function handleGroupRow(index) {
+
+				var insideHtml = $(this).html();
+				var insideText = $(insideHtml).text();
+
+				$(this).css('cursor', 'default');
+
+				var first = insideText[0] === '-';
+				var second = insideText[1] === ' ';
+				if (first && second) {
+					var subText = insideText.substring(2);
+					var currentHtml = insideHtml.replace(insideText, subText);
+					$(this).html(currentHtml);
+				}
+			});
+		}
+
+    };
+    
+	function getGroupHeaderRowHtml(displayName, isCollapsible) {
+		return '<tr class="pgGroupRow ' + (isCollapsible ? 'pgCollapsible' : '') + '"><td colspan="2" class="pgGroupCell">' + (isCollapsible ? '- ' : '') + displayName + '</td></tr>';
+	}
+	function getPropertyRowHtml(pgId, name, value, meta, postCreateInitFuncs, getValueFuncs, options, el) {
+		if (!name) {
+			return '';
+		}
+		var changedCallback = options.callback;
+		meta = meta || {};
+		var displayName = meta.name || name;
+		var type = meta.type || '';
+		var elemId = pgId + name;
+		var valueHTML;
+		var customTypes = options.customTypes;
+		var customType;
+		for (var ct in customTypes) {
+			if (type === ct) {
+				customType = customTypes[ct];
+				break;
+			}
+		}
+		if (customType) {
+			valueHTML = customType.html(elemId, name, value, meta);
+			if (getValueFuncs) {
+				if (customType.hasOwnProperty('makeValueFn')) {
+					getValueFuncs[name] = customType.makeValueFn(elemId, name, value, meta);
+				} else if (customType.hasOwnProperty('valueFn')) {
+					getValueFuncs[name] = customType.valueFn;
+				} else {
+					getValueFuncs[name] = function() {
+						return $('#' + elemId).val();
+					};
+				}
+			}
+		}
+		else if (type === 'boolean' || (type === '' && typeof value === 'boolean')) {
+			valueHTML = '<input type="checkbox" id="' + elemId + '" value="' + name + '"' + (value ? ' checked' : '') + ' />';
+			if (getValueFuncs) {
+				getValueFuncs[name] = function() {
+					return $('#' + elemId).prop('checked');
+				};
+			}
+
+			if (changedCallback) {
+				$(el).on('change', '#' + elemId, function changed() {
+					changedCallback(this, name, $('#' + elemId).is(':checked'));
+				});
+			}
+		} else if (type === 'options' && Array.isArray(meta.options)) {
+			valueHTML = getSelectOptionHtml(elemId, value, meta.options);
+			if (getValueFuncs) {
+				getValueFuncs[name] = function() {
+					return $('#' + elemId).val();
+				};
+			}
+
+			if (changedCallback) {
+				$(el).on('change', '#' + elemId, function changed() {
+					changedCallback(this, name, $('#' + elemId).val());
+				});
+			}
+		} else if (typeof $.fn.spinner === 'function' && (type === 'number' || (type === '' && typeof value === 'number'))) {
+			valueHTML = '<input class="pgControl" type="text" id="' + elemId + '" value="' + value + '" style="width:50px" />';
+			if (postCreateInitFuncs) {
+				postCreateInitFuncs.push(initSpinner(elemId, meta.options, name, changedCallback, el));
+			}
+
+			if (getValueFuncs) {
+				getValueFuncs[name] = function() {
+					return $('#' + elemId).spinner('value');
+				};
+			}
+		} else if (type === 'color' && typeof $.fn.spectrum === 'function') {
+			valueHTML = '<input class="pgControl" type="text" id="' + elemId + '" />';
+			if (postCreateInitFuncs) {
+				postCreateInitFuncs.push(initColorPicker(elemId, value, meta.options, name, changedCallback, el));
+			}
+
+			if (getValueFuncs) {
+				getValueFuncs[name] = function() {
+					return $('#' + elemId).spectrum('get').toHexString();
+				};
+			}
+		} else if (type === 'label') {
+			if (typeof meta.description === 'string' && meta.description) {
+				valueHTML = '<label for="' + elemId + '" title="' + meta.description + '">' + value + '</label>';
+			} else {
+				valueHTML = '<label for="' + elemId + '">' + value + '</label>';
+			}
+		} else {
+			valueHTML = '<input class="pgControl" type="text" id="' + elemId + '" value="' + value + '"</input>';
+			if (getValueFuncs) {
+				getValueFuncs[name] = function() {
+					return $('#' + elemId).val();
+				};
+			}
+
+			if (changedCallback) {
+				$(el).on('propertychange change keyup paste input', '#' + elemId, function changed() {
+					changedCallback(this, name, $('#' + elemId).val());
+				});
+			}
+		}
+
+		if (typeof meta.description === 'string' && meta.description &&
+			(typeof meta.showHelp === 'undefined' || meta.showHelp)) {
+			displayName += '<span class="pgTooltip" title="' + meta.description + '">' + options.helpHtml + '</span>';
+		}
+
+		if (meta.colspan2) {
+			return '<tr class="pgRow"><td colspan="2" class="pgCell">' + valueHTML + '</td></tr>';
+		} else {
+			return '<tr class="pgRow"><td class="pgCell-label">' + displayName + '</td><td class="pgCell">' + valueHTML + '</td></tr>';
+		}
+	}
+
+	function getSelectOptionHtml(id, selectedValue, options) {
+		id = id || '';
+		selectedValue = selectedValue || '';
+		options = options || [];
+
+		var html = '<select';
+		if (id) {
+			html += ' id="' + id + '"';
+		}
+
+		html += '>';
+
+		var text;
+		var value;
+		for (var i = 0; i < options.length; i++) {
+			value = typeof options[i] === 'object' ? options[i].value : options[i];
+			text = typeof options[i] === 'object' ? options[i].text : options[i];
+			html += '<option value="' + value + '"' + (selectedValue === value ? ' selected>' : '>');
+			html += text + '</option>';
+		}
+
+		html += '</select>';
+		return html;
+	}
+
+	function initSpinner(id, options, name, changedCallback, el) {
+		if (!id) {
+			return null;
+		}
+		var opts = {};
+		$.extend(opts, options);
+
+		opts.change = typeof opts.change === 'undefined' ? onSpinnerChange : opts.change;
+
+		return function onSpinnerInit() {
+			var $elem = $('#' + id);
+			$elem.spinner(opts);
+			if (changedCallback) {
+				$elem.on('spin change keyup paste input', function changed(e, ui) {
+					changedCallback(el, name, ui ? ui.value : $(e.target).val());
+				});
+			}
+		};
+	}
+
+	function initColorPicker(id, color, options, name, changedCallback, el) {
+		if (!id) {
+			return null;
+		}
+
+		var opts = {};
+		$.extend(opts, options);
+		if (typeof color === 'string') {
+			opts.color = color;
+		}
+
+		return function onColorPickerInit() {
+			var $elem = $('#' + id);
+			$elem.spectrum(opts);
+			if (changedCallback !== undefined) {
+				$elem.on('change', function changed(e, color) {
+					changedCallback(el, name, color.toHexString());
+				});
+			}
+		};
+	}
+
+	function onSpinnerChange() {
+		var $spinner = $(this);
+		var value = $spinner.spinner('value');
+
+		if (value === null && typeof $spinner.val() === 'string') {
+			$spinner.val('');
+			return;
+		}
+		var min = $spinner.spinner('option', 'min');
+		var max = $spinner.spinner('option', 'max');
+		if (typeof min === 'number' && this.value < min) {
+			this.value = min;
+			return;
+		}
+
+		if (typeof max === 'number' && this.value > max) {
+			this.value = max;
+		}
+	}
 }($);
